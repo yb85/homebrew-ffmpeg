@@ -9,6 +9,7 @@ Contents:
 - [Installation and usage](#installation-and-usage)
   - [Installing with options](#installing-with-options)
   - [Installing latest Git version (`HEAD`)](#installing-latest-git-version-head)
+  - [Installing with binaries with a suffix (`ffmpeg-xxx`)](#installing-with-a-suffix)
 - [Updating](#updating)
 - [Included libraries](#included-libraries)
 - [Troubleshooting](#troubleshooting)
@@ -59,6 +60,27 @@ brew install homebrew-ffmpeg/ffmpeg/ffmpeg --HEAD
 ```
 
 Please note that we don't generally provide support `HEAD` builds, since they may cause issues with other Homebrew-supplied formulae.
+
+### Installing with a suffix
+
+To install `ffmpeg`, `ffprobe` and `ffplay` with a suffix, set up the `HOMEBREW_FFMPEG_SUFFIX` environment variable, *e.g.* :
+
+```bash
+export HOMEBREW_NO_CLEANUP_FORMULAE=ffmpeg # STRONGLY RECOMMENDED : prevents automatic cleaning of older versions
+
+export HOMEBREW_FFMPEG_SUFFIX=-fdk && brew install homebrew-ffmpeg/ffmpeg/ffmpeg --with-fdk-aac
+
+# unset HOMEBREW_FFMPEG_SUFFIX # <-- to remove the environment variable
+```
+This command will create a **keg-only** (not linked) install of FFMPEG with suffixed binaries : `ffmpeg-fdk`, `ffprobe-fdk` and `ffplay-fdk`
+The suffix shall only contain alphanum chracters, `-`, `_` and have a maximum length of 64 characters.
+
+The binaries will be located in `<HOMEBREW_PREFIX>/Cellar/ffmpeg/<version><suffix>/bin` or `<HOMEBREW_PREFIX>/Cellar/ffmpeg/HEAD-<commit>/bin` if you use the `--HEAD` flag.
+
+You can then add these folders to your path, using the previous example, we would add this to our `~/.bashrc` or `~/.zshrc` :
+```bash
+export PATH="$PATH:/opt/homebrew/Cellar/ffmpeg/8.0-fdk/bin"
+```
 
 ## Updating
 
