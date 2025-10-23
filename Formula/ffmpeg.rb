@@ -6,6 +6,11 @@ class Ffmpeg < Formula
   license "GPL-2.0-or-later"
   head "https://github.com/FFmpeg/FFmpeg.git", branch: "master"
 
+  if ENV["HOMEBREW_FFMPEG_SUFFIX"] && ENV["HOMEBREW_FFMPEG_SUFFIX"] =~ /\A[\w\-]{1,64}\z/
+    keg_only "we do not want the 'suffixed' version of FFMPEG to conflict with brew-core formula"
+    version "#{version}#{ENV["HOMEBREW_FFMPEG_SUFFIX"]}"
+  end
+
   option "with-chromaprint", "Enable the Chromaprint audio fingerprinting library"
   option "with-decklink", "Enable DeckLink support"
   option "with-dvd", "Enable DVD-Video demuxer, powered by libdvdnav and libdvdread"
@@ -264,13 +269,22 @@ class Ffmpeg < Formula
       args << "--enable-libopencore-amrwb"
     end
 
+    has_suffix = ENV["HOMEBREW_FFMPEG_SUFFIX"] && ENV["HOMEBREW_FFMPEG_SUFFIX"] =~ /\A[\w\-]{1,64}\z/
+    if has_suffix
+      ohai "Building FFMPEG binaries with suffix \"#{ENV["HOMEBREW_FFMPEG_SUFFIX"]}\""
+      ohai "Install prefix : \"#{prefix}\""
+      args << "--progs-suffix=#{ENV["HOMEBREW_FFMPEG_SUFFIX"]}"
+    end
+
     system "./configure", *args
     system "make", "install"
 
-    # Build and install additional FFmpeg tools
-    system "make", "alltools"
-    bin.install (buildpath/"tools").children.select { |f| f.file? && f.executable? }
-    pkgshare.install buildpath/"tools/python"
+    unless has_suffix
+      # Build and install additional FFmpeg tools
+      system "make", "alltools"
+      bin.install (buildpath/"tools").children.select { |f| f.file? && f.executable? }
+      pkgshare.install buildpath/"tools/python"
+    end
 
     if build.with? "tesseract"
       opoo <<~EOS
@@ -281,6 +295,9 @@ class Ffmpeg < Formula
   end
 
   test do
+    if ENV["HOMEBREW_FFMPEG_SUFFIX"] && ENV["HOMEBREW_FFMPEG_SUFFIX"] =~ /\A[\w\-]{1,64}\z/
+      odie "Testing is not available for the suffixed version of FFMPEG"
+    end
     # Create a 5 second test MP4
     mp4out = testpath/"video.mp4"
     system bin/"ffmpeg", "-filter_complex", "testsrc=rate=1:duration=5", mp4out
